@@ -1,0 +1,331 @@
+This is a project logbook which contains all the daily activities done for and on the project "AudioWorkshop" source code.
+it was started on 30 may 2023. it is a part of my summer break skill enhancement schedule. This project would be made in
+C++ and with the help of .
+
+**************************************************************************************************************************
+30 may 2023
+
+first entry in the logbook.
+Considering the scope of my project, the most important part of the project would be working the audio files.
+So firstly, we would be looking at the internal structure of a .wav file:
+
+Typical structure of a .wav file...
+
+typedef uint8_t   BYTE;
+typedef uint16_t  WORD;
+typedef uint32_t  DWORD;
+
+-----------------------------------
+
+ |   BYTE   chunkID[4];     |       }
+ |   DWORD  chunkSize;      |       Descriptor
+ |   BYTE   format[4];      |       }
+ |   BYTE   subchunk1ID[4]; |       }
+ |   DWORD  subchunk1Size;  | 
+ |   WORD   audioFormat;    |
+ |   WORD   numChannels;    |       Meta data about audio file
+ |   DWORD  sampleRate;     |
+ |   DWORD  byteRate;       |
+ |   WORD   blockAlign;     |
+ |   WORD   bitsPerSample;  |       }
+ |   BYTE   subchunk2ID[4]; |       }
+ |   DWORD  subchunk2Size;  |       Size of data and actual raw sound samples..
+
+
+-----------------------------------
+
+chunkID : Contains the letters "RIFF" in ASCII format (0x52494646).
+
+chunkSize : Size of the rest of the file from this point.
+
+format : Contains the letter "WAVE" in ASCII format (0x57415645).
+
+subchunk1ID : Contains the letter "fmt " (0x66d7420).
+
+subchunk1Size : Size of the rest of the subchunk which follows this number.
+
+audioFormat : 1 for PCM (Pulse code modulation) which indicates file is uncompressed, values other than 1 indicates\
+some sort of compression.
+
+numChannels : 1 for mono signals, 2 for stereo signals and so on...
+
+sampleRate : Samples per second.
+
+byteRate : sampleRate * numChannels * bitsPerSample / 8.
+
+blockAlign : numChannels * bitsPerSample / 8. (Number of bytes for one sample including all channels)
+
+bitsPerSample : Indicates number of bits per sample for example 8 bit : 8 , 16 bit = 16 so on...
+
+subchunk2ID : Contains letter "data" (0x64617461).
+
+subchunk2Size : no of Sample * numChannels * bitsPerSample / 8. (Number of bytes in the data)
+
+
+
+**************************************************************************************************************************
+30 may 2023
+ 
+
+After getting grasp of what .wav file are, my next task would be to make a prototype test to ensure that the audio file\
+is in-fact working.
+
+timestamp : (12 : 25 : 25 sec pm)
+-> test_audio.cpp contains the prototype code{
+#   structure by the name of WAVEHEADER which would be containing the first 44 bits of header of audio file i.e.,
+#   file structure discused above.
+#   cstdint is used to get fixed length integer data types.
+#   fstream is used for i/o operations to be done with the audio file.
+}
+
+timestamp : (2 : 46 : 45 sec pm)
+    Read and write from audio file was successful..wasted 2 hrs trying to read from an empty array :\ until i glazed upon it.
+
+*************************************************************************************************************************
+31 may 2023
+
+So after making sure that audio file is working, my next task would be to apply some manipulation techniques such that\
+we can add more functionality to my application rather than just copying the contents of one file and pasting to the 
+other file...
+
+i have created a wav_struct file to reduce the rebundancy of code.
+
+Following are the task :
+
+timestamp : (10 : 57 : 33 sec am)
+>> Reversing the audio file or playing the samples in reverse.
+-> test_reverse.cpp would be containing the code{
+#   Reversing the audio sample isn't itself a difficult task as i only have to write audio samples from the original file\
+#   to the output file in reverse order, pretty simple as that.
+#   i should make sure that header contains of the original file must be not in reverse order as the header just contains\
+#   the details or specifically the meta data about the audio sample not the audio samples itself.
+}
+
+timestamp : (11 : 59 : 11 sec am)
+    Well well... reversing wasn't that easy as it seemed. Audio file was successfully reversed but i have to make sure that\
+    that last two digit of the size of the audio file should be an even number, so that loop would end as soon as the\
+    pointer reaches the 44 mark where header starts..
+
+    subchunk2Size can be used in this case as it contains the size of audio file excluding 44 bits (header, which comes before it\
+    consists of 44 bits).
+
+    To ensure that, we would first find out the size of audio file with the solution discussed just above. Then with the help\
+    of some techniques we learned back in the days and will continue to do it whenever we try to learn a new language.... \
+    we will find out if the last two digits are even or odd.
+    (use of mod % and division / is a bit overrated but there aren't any option unless that start to store in string format.. :[).
+
+timestamp : (12 : 31 : 25 sec am)
+>> Ensuring the size of the file.
+-> audio_size would be containing the code{
+#   my first move would be to read the header.
+#   Then i would access "subchunk2Size" to get the size of audio samples.
+#   Then with simple if else i would ensure its size.
+#   To make it even i just added 1 to it or technically it increased 8 bits of null audio samples.
+#   i could have just also substract it by 1 to make it even but it would just be loss of data.(Wastage of memory is okay\
+#   compared to the loss of data).
+}
+
+timestamp : (12 : 55 : 23 sec am)
+    i honestly don't how it took me hour and our to do that...
+    Probably analyzing the other code..
+
+    Our next task would be to test the code files with different audio files from the internet.
+    i would gather some .wav files in the meantime..
+
+timestamp : (12 : 59 : 56 am)
+
+timestamp : (1 : 24 : 33 pm)
+    Downloaded some .wav files from https://mixkit.co/free-sound-effects.
+    
+    copying and pasting of audio files work just fine.
+    Testing the reverse function now.
+
+timestamp : (1 : 59 : 01 pm)
+    Reverse also works with every audio file... :D.
+
+    i have figured out another ways to solve the issue of odd file sizes, the condition is that whenever\
+    pointer equals to 44 or less it would automatically exit the loop.
+
+***********************************************************************************************************************************
+01 june 2023
+
+After making sure that the audio file , not just one, works on reverse our next task would be to put some \
+more functionality to the application.... we are not just going play the audio and in reverse : 
+
+Following are the tasks:
+
+timestamp : (10 : 48 : 14 sec am)
+>> Slowing down the playback speed of the audio.
+Now i am not sure that how this is going to be, i have thought of doing this long ago but when i looked into\
+it.... it rather seems to be more complex than i thought it would :\.
+Not sure if i will be able to complete it but would give it a try nonetheless.
+-> test_slow would be containing all the code{
+#   So first thing, our main goal would be to access the audio sample either bit by bit ( which i am not sure of how am i going to do)\
+#   Or just access them block by block as slowing the speed of the found basically means one audio sample being played more than once.
+#   Secondly, i must ensure that the header of the generated audio file must be in accordance with the amount of sample we are goinf to\
+#   store.
+#   if we are able to pull this then it would be a massive progress in the development...
+}
+
+timestamp : (11 : 13 : 23 sec am)
+    And!!!!!! we are able to pull this off!!!!!!!!!
+    Unbelievable..... took soo less time, sigh........ :D.
+    
+    So in short, i did not tried the above method we discused a while ago. With all the goddamn of hours i had\
+    put into the understanding the .wav file i just figured out i can just increase the sample rate and with that\
+    i will only have to update the byteRate and not the entire header past the Descriptor though it affects the\
+    pitch too but thats how we want it to be..
+    
+    and it worked quit good, for example:
+
+    let's say an audio file contains some audio sample which plays at the sample rate(speed in lay mans language)\
+    of 10 samples per sec,
+    So addding more value to the sample rate would increase the value of sample rate (basic math) and also increaseing\
+    the byteRate in accordance with increased sample rate actually increases the speed of the audio itself..
+    So when statement like below gets executed,
+                            sample_rate += int(sample_rate / x) 
+    It increases the sample rate by sample_rate / x.
+    let's assume the value of the x to be 1 then 10 / 1 =  10 and the effects would be,
+        sample_rate += int(10 / 1);
+        sample_rate = 20;
+        and then just the statement,
+        byteRate = sampleRate * numChannels * bitsPerSample / 8.
+        Now audio will play at the double the speed....
+    
+    Quite simple isn't?
+
+******************************************************************************************************************************
+02 june 2023
+
+Our todays task would be an another functionality that i would like to add and that would be to compare two\
+distinct audio files and giving an approximate percentage of how much they differ or are similar.
+
+So how am i going to do this?
+Well i have some things in my mind, remember the header of the file we discused earlier? lemme show you :
+
+-----------------------------------
+
+ |   BYTE   chunkID[4];     |       }
+ |   DWORD  chunkSize;      |       Descriptor
+ |   BYTE   format[4];      |       }
+ |   BYTE   subchunk1ID[4]; |       }
+ |   DWORD  subchunk1Size;  | 
+ |   WORD   audioFormat;    |
+ |   WORD   numChannels;    |       Meta data about audio file
+ |   DWORD  sampleRate;     |
+ |   DWORD  byteRate;       |
+ |   WORD   blockAlign;     |
+ |   WORD   bitsPerSample;  |       }
+ |   BYTE   subchunk2ID[4]; |       }
+ |   DWORD  subchunk2Size;  |       Size of data and actual raw sound samples..
+
+
+-----------------------------------
+
+Each header of different audio file consists some attributes that are different from one another. Even an audio\
+which is a copy of another audio file may contain some attribute which are different from one another.
+But when we compare two things we usually talk about two aspects; difference and similarities.
+
+So for that there are some attributes that can have similar values in more than two audio files, of course only\
+when one of them is a copy of the other..
+we should now find all those suitable disimilar and similar attributes and assign them suitable percentages\
+so we would be able to compare and output percentage of similarity and disimilarity..
+
+SO, 
+
+----------------------
+Attribute  | percentage
+----------------------
+SampleRate |  10%,   |
+byteRate   |  10%,   |
+blockAlign |  10%    |
+----------------------
+
+For remaining 70% we would be comparing audio samples block by block.
+
+Now one more important point i would like to discuss is size of the file, when size of the two to be compared\
+file is not same than we would just reduce 50% from the total percentage as an audio file may contain the audio\
+samples of more than one file so when comparing some audio samples may even match..
+
+timestamp : (1 : 06 : 23 sec pm)
+>> test_compare.cpp would be containing all the code{
+#   first of all we would just make two object of WAVEHEADER type to store the header info of two files.
+} 
+
+********************************************************************************************************************************
+
+07 june 2023
+
+So after a long break.. i have finally completed all of the modules. Now i have to intergrate all of them into a\
+single executable file and for that i would first have to intergrate all of them into one source file.
+
+timestamp : (11 : 41 : 23 sec am)
+>> project.cpp would be containing the source code{
+#   Classes can be used as different module holders.
+}
+
+timestamp : (12 : 50 : 34 sec am)
+
+So after some tweaks and modification i have intergrated all the modules into one source code.
+i have stumbled upon something which is worth recording or else i may forget about it later,
+So, there can be two ways how a user can use this application. 
+
+1) User first must provide at least one path that leads to a valid .wav file, after that it can perform all the\
+operations with that one file except compare as compare will require one more path to a valid .wav audio file.\
+It is a kind of static approach.
+
+2) However in this approach the user must provide a new valid path to a .wav file everytime it wants to perform new operation.\
+This one promotes dynamic approach.
+
+what do you think? which is better?
+
+i am currently stickiing to static one as providing new paths everytime seems kind of inconvenience to me...
+
+*********************************************************************************************************************************
+
+08 june 2023
+
+So after some dicussion with my friends i have came to the conclusion that application would contain both/
+approaches and to that we can simply add a lock-file feature which would lock the current file and from then on/
+the app would adapt static approach otherwise dynamic.
+
+timestamp : (10 : 44 : 23 am)
+    Making the source code more user defined and putting some exception handling.
+
+
+***********************************************************************************************************************************
+10 june 2023
+
+timestamp : (10 : 21 : 34 am)
+    i am back. i was not being lazy... i just injured my shoulder somehow during workout so i was resting.. though\
+    i played a lot of stalker.. 
+    Anyways,
+    everything is done source code is ready. 
+    i added a feature of playing sound which i did not thought of before....a music player which does not play music\
+    seemed kind of odd to me. 
+    prototype code can be found in >> play_audio.cpp
+
+    there are two things i would like to discuss is:
+    
+    i have used some libraries of winmm.lib so when compiling through gcc compiler be sure to use -l command to\
+    to link library.
+
+    Another important thing i would like to discuss is about the function i used to play the audio file - \
+    PlaySound(TEXT(<"PATH">), NULL, SND_SYNC)
+    when passing a variable in PATH the editor (VS code in which i am working) throws some red squiggles\
+    but when compiling it gets compiled just fine..
+
+    Now our next task would be to decide which GUI framework we are going to us.
+    i think .Net framework can be used but will look upon other open source libraries too.
+
+***************************************************************************************************************************************
+
+20 june 2023
+
+    it has been quit awhile since i have recorded something here, while working in visual studio i have learned\
+    quite a lot and felt overwhelmed at some point. Everything i have written above feels like some guy with little\
+    knowledge.
+    the project is completed and ready to publish.
+    "AudioWorkshop" is the final executable file.
+    timestamp(1 : 40 : 32 pm)
+
